@@ -1,0 +1,78 @@
+import json
+from database import SessionLocal, Farmer, FarmerReport, init_db
+
+SEED_DATA = [
+    {"farmer_name": "Ramesh Patil", "village": "Dindori", "district": "Nashik", "crop": "Onion", "soil_type": "Black Cotton", "season": "Kharif", "problem": "Onion crops developed purple blotch disease after unexpected rain in October, affecting 60% of the field.", "solution": "Applied Mancozeb fungicide spray every 10 days and improved drainage channels around the field.", "outcome": "partial", "language": "marathi"},
+    {"farmer_name": "Suresh Deshmukh", "village": "Manchar", "district": "Pune", "crop": "Sugarcane", "soil_type": "Alluvial", "season": "Summer", "problem": "Sugarcane crop attacked by early shoot borer in March, causing 30% yield loss in initial assessment.", "solution": "Used Chlorpyrifos soil application and removed affected shoots manually across entire 3 acre plot.", "outcome": "success", "language": "hindi"},
+    {"farmer_name": "Vitthal Shinde", "village": "Hingoli", "district": "Amravati", "crop": "Soybean", "soil_type": "Black Cotton", "season": "Kharif", "problem": "Waterlogging after heavy rainfall in July destroyed soybean roots in low-lying areas of the farm.", "solution": "Created raised bed farming structure and added drainage pipes, replanted in August with shorter duration variety.", "outcome": "partial", "language": "marathi"},
+    {"farmer_name": "Dnyaneshwar Jadhav", "village": "Patur", "district": "Amravati", "crop": "Cotton", "soil_type": "Black Cotton", "season": "Kharif", "problem": "Pink bollworm infestation destroyed 40% of cotton bolls before they could be harvested.", "solution": "Installed pheromone traps and sprayed Spinosad insecticide, also used intercropping with maize as barrier.", "outcome": "partial", "language": "marathi"},
+    {"farmer_name": "Prakash Kulkarni", "village": "Deolali", "district": "Nashik", "crop": "Wheat", "soil_type": "Sandy Loam", "season": "Rabi", "problem": "Wheat crop showed yellow rust symptoms in February affecting upper leaves and reducing grain filling.", "solution": "Applied Propiconazole fungicide immediately and added potassium fertilizer to strengthen plant immunity.", "outcome": "success", "language": "hindi"},
+    {"farmer_name": "Mahadev Thorat", "village": "Pandharpur", "district": "Solapur", "crop": "Jowar", "soil_type": "Black Cotton", "season": "Kharif", "problem": "Shoot fly attack on young jowar seedlings caused dead heart condition in 50% of plants in first week.", "solution": "Applied Imidacloprid seed treatment before sowing and used resistant variety Phule Chitra.", "outcome": "success", "language": "marathi"},
+    {"farmer_name": "Balasaheb Pawar", "village": "Baramati", "district": "Pune", "crop": "Sugarcane", "soil_type": "Alluvial", "season": "Summer", "problem": "Sugarcane ratoon crop showed poor germination due to grub attack damaging root system underground.", "solution": "Applied Chlorpyrifos 20EC through drip irrigation system and added organic matter to improve soil health.", "outcome": "success", "language": "marathi"},
+    {"farmer_name": "Ganesh Nikam", "village": "Nandura", "district": "Amravati", "crop": "Cotton", "soil_type": "Black Cotton", "season": "Kharif", "problem": "Bt cotton showed susceptibility to whitefly attack spreading leaf curl virus throughout the field.", "solution": "Sprayed Thiamethoxam insecticide and removed severely infected plants to prevent further spread.", "outcome": "failure", "language": "hindi"},
+    {"farmer_name": "Rajendra Borse", "village": "Shirpur", "district": "Nashik", "crop": "Onion", "soil_type": "Sandy Loam", "season": "Rabi", "problem": "Onion seedlings transplanted in November showed tip burning due to calcium deficiency in sandy soil.", "solution": "Applied calcium nitrate foliar spray weekly and improved irrigation frequency to maintain soil moisture.", "outcome": "success", "language": "marathi"},
+    {"farmer_name": "Santosh Mane", "village": "Hatkanangle", "district": "Kolhapur", "crop": "Rice", "soil_type": "Alluvial", "season": "Kharif", "problem": "Blast disease infected rice panicles at flowering stage causing significant grain sterility and yield loss.", "solution": "Applied Tricyclazole fungicide at boot leaf stage as preventive measure and drained standing water.", "outcome": "partial", "language": "marathi"},
+    {"farmer_name": "Anil Gavhane", "village": "Shrirampur", "district": "Nashik", "crop": "Onion", "soil_type": "Sandy Loam", "season": "Rabi", "problem": "Thrips infestation caused silvery patches on onion leaves reducing photosynthesis and bulb development.", "solution": "Used blue sticky traps and applied Fipronil spray, also avoided excessive nitrogen fertilization.", "outcome": "success", "language": "hindi"},
+    {"farmer_name": "Popat Landge", "village": "Georai", "district": "Aurangabad", "crop": "Tur Dal", "soil_type": "Black Cotton", "season": "Kharif", "problem": "Sterility mosaic disease spread through mite vectors destroyed entire tur dal crop before pod formation.", "solution": "Rogued out infected plants immediately and sprayed Dicofol miticide to control mite population.", "outcome": "failure", "language": "marathi"},
+    {"farmer_name": "Vishwas Shelke", "village": "Jintur", "district": "Latur", "crop": "Soybean", "soil_type": "Black Cotton", "season": "Kharif", "problem": "Soybean crop suffered from yellow mosaic virus spread by whiteflies after delayed monsoon arrival.", "solution": "Applied reflective mulch to repel whiteflies and sprayed neem oil solution every 15 days.", "outcome": "partial", "language": "hindi"},
+    {"farmer_name": "Dattatray Waghmare", "village": "Udgir", "district": "Latur", "crop": "Tur Dal", "soil_type": "Red Laterite", "season": "Kharif", "problem": "Pod borer caterpillars destroyed 70% of tur dal pods just before harvest in November.", "solution": "Applied Bt spray and HaNPV biological pesticide, installed light traps to catch adult moths.", "outcome": "partial", "language": "marathi"},
+    {"farmer_name": "Narayan Kamble", "village": "Akkalkot", "district": "Solapur", "crop": "Jowar", "soil_type": "Black Cotton", "season": "Rabi", "problem": "Charcoal rot disease affected jowar stalks during grain filling due to moisture stress in December.", "solution": "Maintained soil moisture through critical irrigation stages and applied potash fertilizer to reduce stress.", "outcome": "success", "language": "marathi"},
+    {"farmer_name": "Hemant Gaikwad", "village": "Phaltan", "district": "Solapur", "crop": "Sugarcane", "soil_type": "Black Cotton", "season": "Summer", "problem": "Red rot disease spread through infected setts caused stalk rotting and complete crop failure in 2 acres.", "solution": "Treated setts with Carbendazim before planting and adopted hot water treatment method for next season.", "outcome": "failure", "language": "hindi"},
+    {"farmer_name": "Kailas Bhosale", "village": "Panhala", "district": "Kolhapur", "crop": "Rice", "soil_type": "Alluvial", "season": "Kharif", "problem": "Brown planthopper outbreak caused hopperburn destroying rice crop in patches across 4 acre field.", "solution": "Applied Buprofezin insecticide and maintained proper spacing to improve air circulation in crop canopy.", "outcome": "success", "language": "marathi"},
+    {"farmer_name": "Mohan Chavan", "village": "Malshiras", "district": "Solapur", "crop": "Onion", "soil_type": "Sandy Loam", "season": "Rabi", "problem": "Fusarium basal rot caused rotting at neck region of onion bulbs during storage losing 40% of produce.", "solution": "Improved field drainage and applied Trichoderma viride biological fungicide at planting time.", "outcome": "partial", "language": "marathi"},
+    {"farmer_name": "Sanjay Patange", "village": "Nanded", "district": "Latur", "crop": "Cotton", "soil_type": "Black Cotton", "season": "Kharif", "problem": "Excessive rain in September caused boll shedding and boll rot reducing cotton yield by 35%.", "solution": "Applied boron and potassium spray during boll development stage and improved field drainage system.", "outcome": "partial", "language": "hindi"},
+    {"farmer_name": "Tukaram More", "village": "Indapur", "district": "Pune", "crop": "Wheat", "soil_type": "Alluvial", "season": "Rabi", "problem": "Late sown wheat experienced terminal heat stress during grain filling reducing grain weight significantly.", "solution": "Applied timely irrigation at crown root initiation and grain filling stages and used heat tolerant variety.", "outcome": "success", "language": "marathi"},
+]
+
+# Extend to 150 by repeating with variations
+DISTRICTS = ["Nashik", "Pune", "Amravati", "Nagpur", "Solapur", "Kolhapur", "Aurangabad", "Latur"]
+CROPS = ["Onion", "Soybean", "Cotton", "Sugarcane", "Wheat", "Rice", "Tur Dal", "Jowar"]
+
+def load_seed():
+    init_db()
+    db = SessionLocal()
+    count = 0
+    
+    # Use base 20 records and create 150 total with slight variations
+    import random
+    all_records = []
+    for i in range(150):
+        base = SEED_DATA[i % len(SEED_DATA)].copy()
+        base['district'] = random.choice(DISTRICTS)
+        base['crop'] = random.choice(CROPS) if i >= len(SEED_DATA) else base['crop']
+        all_records.append(base)
+    
+    for item in all_records:
+        try:
+            farmer = Farmer(
+                name=item['farmer_name'],
+                village=item['village'],
+                district=item['district'],
+                language=item['language']
+            )
+            db.add(farmer)
+            db.flush()
+            
+            report = FarmerReport(
+                farmer_id=farmer.id,
+                crop=item['crop'],
+                soil_type=item['soil_type'],
+                district=item['district'],
+                problem=item['problem'],
+                solution=item['solution'],
+                outcome=item['outcome'],
+                season=item['season'],
+                language=item['language']
+            )
+            db.add(report)
+            count += 1
+        except Exception as e:
+            print(f"Error: {e}")
+            continue
+    
+    db.commit()
+    db.close()
+    print(f"✅ Seeded {count} farmer reports successfully!")
+
+if __name__ == "__main__":
+    load_seed()
