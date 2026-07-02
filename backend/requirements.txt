@@ -4,14 +4,9 @@ sqlalchemy
 pandas
 numpy
 scikit-learn
-torch
-torchvision
 pillow
 chromadb
 sentence-transformers
-langchain
-langgraph
-langchain-google-genai
 google-genai
 gtts
 streamlit
