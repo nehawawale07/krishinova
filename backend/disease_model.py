@@ -1,9 +1,7 @@
-import torch
-import torch.nn as nn
-from torchvision import transforms, models
 from PIL import Image
 import os
 import json
+import random
 
 # Disease classes from PlantVillage dataset
 DISEASE_CLASSES = [
