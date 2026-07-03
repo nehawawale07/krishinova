@@ -38,7 +38,8 @@ def get_insights(district):
 DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'backend', 'krishinova.db')
 try:
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-    USE_LOCAL_DB = True
+    test = pd.read_sql("SELECT COUNT(*) as count FROM farmer_reports", conn).iloc[0]['count']
+    USE_LOCAL_DB = test > 0
 except:
     USE_LOCAL_DB = False
 
