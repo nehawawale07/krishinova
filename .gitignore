@@ -1,7 +1,7 @@
 venv/
 data/raw/
 backend/chroma_db/
-backend/krishinova.db
+
 __pycache__/
 *.zip
 *.pyc
