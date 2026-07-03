@@ -6,7 +6,6 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from database import SessionLocal, FarmerReport, Farmer, CropData, DiseaseLog, init_db
-from vectorstore import query_similar_reports
 import uvicorn
 
 app = FastAPI(title="KrishiNova API", version="1.0.0")
